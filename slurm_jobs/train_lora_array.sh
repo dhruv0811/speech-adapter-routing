@@ -47,6 +47,12 @@ echo "============================================"
 # Set up environment
 cd $PROJECT/speech-adapter-routing
 
+# Load environment variables from .env file if it exists
+if [ -f .env ]; then
+    echo "Loading environment variables from .env"
+    export $(grep -v '^#' .env | xargs)
+fi
+
 # Set cache directories
 export HF_HOME=$PROJECT/.cache/huggingface
 export TRANSFORMERS_CACHE=$PROJECT/.cache/transformers

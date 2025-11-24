@@ -18,7 +18,7 @@ dependencies = [
     "soundfile>=0.12.0",
     
     # Mozilla Data Collective for Common Voice
-    "mozdata>=0.1.0",
+    "datacollective>=0.0.30",
     
     # Evaluation
     "evaluate>=0.4.0",
