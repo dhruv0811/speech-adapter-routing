@@ -1,0 +1,28 @@
+# Whisper Model Configurations
+
+whisper_small:
+  name: "openai/whisper-small"
+  type: "whisper"
+  hidden_dim: 768
+  num_encoder_layers: 12
+  num_decoder_layers: 12
+  sampling_rate: 16000
+  max_length: 448
+  
+whisper_medium:
+  name: "openai/whisper-medium"
+  type: "whisper"
+  hidden_dim: 1024
+  num_encoder_layers: 24
+  num_decoder_layers: 24
+  sampling_rate: 16000
+  max_length: 448
+
+whisper_large:
+  name: "openai/whisper-large-v3"
+  type: "whisper"
+  hidden_dim: 1280
+  num_encoder_layers: 32
+  num_decoder_layers: 32
+  sampling_rate: 16000
+  max_length: 448

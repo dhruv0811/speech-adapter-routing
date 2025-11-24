@@ -1,0 +1,46 @@
+# Core ML frameworks
+torch>=2.1.0
+torchaudio>=2.1.0
+transformers>=4.35.0
+datasets>=2.14.0
+peft>=0.7.0
+accelerate>=0.24.0
+
+# Audio processing
+librosa>=0.10.0
+soundfile>=0.12.0
+
+# Mozilla Data Collective for Common Voice
+mozdata>=0.1.0
+
+# Evaluation
+evaluate>=0.4.0
+jiwer>=3.0.0
+
+# Training utilities
+wandb>=0.16.0
+tensorboard>=2.15.0
+tqdm>=4.66.0
+
+# Data handling
+pandas>=2.1.0
+numpy>=1.24.0
+scipy>=1.11.0
+pyarrow>=14.0.0
+
+# Visualization & analysis
+matplotlib>=3.8.0
+seaborn>=0.13.0
+scikit-learn>=1.3.0
+
+# Configuration
+omegaconf>=2.3.0
+hydra-core>=1.3.0
+pyyaml>=6.0
+
+# Utilities
+python-dotenv>=1.0.0
+
+# ESPnet for OWSM (optional)
+espnet>=202310
+espnet_model_zoo>=0.1.7

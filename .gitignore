@@ -1,0 +1,82 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# UV / Virtual environments
+.venv/
+.uv/
+uv.lock
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific - Checkpoints & Models
+checkpoints/
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# Results & Outputs
+results/
+outputs/
+
+# Logs
+logs/
+*.log
+*.out
+*.err
+wandb/
+tensorboard/
+
+# Data & Cache
+data/
+.cache/
+*.cache
+
+# HuggingFace cache (usually symlinked or external)
+models--*/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Secrets & Config
+.env
+*.env
+secrets.yaml
+wandb_api_key.txt
+
+# SLURM job files (optional - uncomment if you want to track these)
+# slurm-*.out
+# slurm-*.err

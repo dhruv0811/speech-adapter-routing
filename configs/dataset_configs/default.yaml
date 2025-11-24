@@ -1,0 +1,94 @@
+# Dataset Configurations
+
+# Supported languages
+languages:
+  hindi:
+    code: "hi"
+    fleurs_code: "hi_in"
+    common_voice_code: "hi"
+    ai4bharat_subset: "hindi"
+    family: "indo-aryan"
+    
+  italian:
+    code: "it"
+    fleurs_code: "it_it"
+    common_voice_code: "it"
+    mls_subset: "italian"
+    family: "romance"
+    
+  punjabi:
+    code: "pa"
+    fleurs_code: "pa_in"
+    common_voice_code: "pa-IN"
+    ai4bharat_subset: "punjabi"
+    family: "indo-aryan"
+    
+  telugu:
+    code: "te"
+    fleurs_code: "te_in"
+    common_voice_code: "te"
+    ai4bharat_subset: "telugu"
+    family: "dravidian"
+
+# Dataset sources
+datasets:
+  common_voice:
+    name: "mozilla-foundation/common_voice_16_1"
+    audio_column: "audio"
+    text_column: "sentence"
+    split_train: "train"
+    split_validation: "validation"
+    split_test: "test"
+    
+  ai4bharat:
+    name: "ai4bharat/indicvoices_r1"
+    audio_column: "audio"
+    text_column: "transcription"
+    split_train: "train"
+    split_validation: "validation"
+    split_test: "test"
+    
+  mls:
+    name: "facebook/multilingual_librispeech"
+    audio_column: "audio"
+    text_column: "text"
+    split_train: "train"
+    split_validation: "validation"
+    split_test: "test"
+    
+  fleurs:
+    name: "google/fleurs"
+    audio_column: "audio"
+    text_column: "transcription"
+    split_train: "train"
+    split_validation: "validation"
+    split_test: "test"
+
+# Audio preprocessing
+audio:
+  sampling_rate: 16000
+  max_duration: 30.0              # Max audio length in seconds
+  min_duration: 1.0               # Min audio length in seconds
+  normalize: true                 # Normalize audio amplitude
+  trim_silence: false             # Optional silence trimming
+
+# Data augmentation (optional)
+augmentation:
+  enabled: false
+  spec_augment:
+    freq_mask_param: 27
+    time_mask_param: 100
+    num_freq_masks: 2
+    num_time_masks: 2
+
+# Dataset mixing ratios (for multi-source training)
+mixing_ratios:
+  default:
+    ai4bharat: 0.6
+    common_voice: 0.4
+  balanced:
+    ai4bharat: 0.5
+    common_voice: 0.5
+  ai4bharat_heavy:
+    ai4bharat: 0.8
+    common_voice: 0.2

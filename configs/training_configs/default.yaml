@@ -1,0 +1,41 @@
+# Default Training Configuration
+
+# Batch settings
+batch_size: 16                    # Per-GPU batch size
+gradient_accumulation_steps: 4    # Effective batch size = 64
+
+# Optimization
+learning_rate: 5.0e-4             # Higher LR for LoRA than full fine-tuning
+weight_decay: 0.01
+warmup_steps: 500
+max_steps: 5000                   # ~10 epochs on typical dataset
+num_epochs: null                  # Alternative to max_steps
+
+# Scheduler
+scheduler_type: "linear"          # linear, cosine, constant
+warmup_ratio: null                # Alternative to warmup_steps
+
+# Evaluation & checkpointing
+eval_steps: 500                   # Evaluate every N steps
+save_steps: 1000                  # Save checkpoint every N steps
+save_total_limit: 3               # Keep only last N checkpoints
+load_best_model_at_end: true
+metric_for_best_model: "wer"
+greater_is_better: false          # Lower WER is better
+
+# Early stopping
+early_stopping_patience: 5        # Stop if no improvement for N evaluations
+early_stopping_threshold: 0.001   # Minimum improvement to count
+
+# Mixed precision
+mixed_precision: "bf16"           # bf16 on A100, fp16 on V100
+gradient_checkpointing: true      # Save memory for large models
+
+# Reproducibility
+seed: 42
+
+# Generation settings for evaluation
+generation:
+  max_new_tokens: 256
+  num_beams: 1                    # Greedy decoding (faster)
+  do_sample: false

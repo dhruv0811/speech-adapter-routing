@@ -1,0 +1,19 @@
+# OWSM Model Configurations
+
+owsm_small:
+  name: "espnet/owsm_v3.1_ebf"
+  type: "owsm"
+  hidden_dim: 768
+  num_encoder_layers: 12
+  num_decoder_layers: 6
+  sampling_rate: 16000
+  max_length: 448
+
+owsm_medium:
+  name: "espnet/owsm_v3.1_base"
+  type: "owsm"
+  hidden_dim: 1024
+  num_encoder_layers: 18
+  num_decoder_layers: 6
+  sampling_rate: 16000
+  max_length: 448
