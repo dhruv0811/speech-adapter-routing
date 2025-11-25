@@ -263,25 +263,43 @@ def load_ai4bharat(
     
     lang_name = lang_map.get(language.lower(), language.lower())
     
+    # Map split names: IndicVoices uses 'valid' not 'validation'
+    split_map = {
+        "validation": "valid",
+        "val": "valid",
+        "dev": "valid",
+    }
+    actual_split = split_map.get(split, split)
+    
     try:
         dataset = hf_load_dataset(
             "ai4bharat/IndicVoices",
             lang_name,
-            split=split,
+            split=actual_split,
             cache_dir=cache_dir,
             streaming=streaming,
             trust_remote_code=True,
         )
         
+        # IndicVoices uses 'audio_filepath' column, rename to 'audio' for consistency
+        if "audio_filepath" in dataset.column_names:
+            dataset = dataset.rename_column("audio_filepath", "audio")
+        
         # Cast audio to correct sampling rate  
         if not streaming:
             dataset = dataset.cast_column("audio", Audio(sampling_rate=16000))
         
-        # Rename columns to standard names if needed
-        if "transcription" in dataset.column_names:
-            dataset = dataset.rename_column("transcription", "text")
-        elif "sentence" in dataset.column_names:
-            dataset = dataset.rename_column("sentence", "text")
+        # Rename text columns to standard 'text' if needed
+        # IndicVoices has 'verbatim' and 'normalized' - use 'normalized' as the text
+        if "text" not in dataset.column_names:
+            if "normalized" in dataset.column_names:
+                dataset = dataset.rename_column("normalized", "text")
+            elif "verbatim" in dataset.column_names:
+                dataset = dataset.rename_column("verbatim", "text")
+            elif "transcription" in dataset.column_names:
+                dataset = dataset.rename_column("transcription", "text")
+            elif "sentence" in dataset.column_names:
+                dataset = dataset.rename_column("sentence", "text")
             
         if streaming:
             logger.info(f"Loaded AI4Bharat IndicVoices ({lang_name}) in streaming mode")
