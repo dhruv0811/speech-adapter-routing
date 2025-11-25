@@ -368,8 +368,16 @@ class ASRTrainer:
                     num_batches += 1
                 
                 # Generate predictions
+                # Cast input_features to model dtype for generation (avoids dtype mismatch)
+                if self.mixed_precision == "bf16":
+                    gen_input_features = input_features.to(torch.bfloat16)
+                elif self.mixed_precision == "fp16":
+                    gen_input_features = input_features.to(torch.float16)
+                else:
+                    gen_input_features = input_features
+                
                 generated_ids = self.model.generate(
-                    input_features=input_features,
+                    input_features=gen_input_features,
                     max_new_tokens=256,
                 )
                 

@@ -59,7 +59,6 @@ wandb/
 tensorboard/
 
 # Data & Cache
-data/
 .cache/
 *.cache
 
