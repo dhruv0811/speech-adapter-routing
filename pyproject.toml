@@ -9,16 +9,13 @@ dependencies = [
     "torch>=2.1.0",
     "torchaudio>=2.1.0",
     "transformers>=4.35.0",
-    "datasets>=2.14.0",
+    "datasets>=2.14.0,<3.0.0",  # Pin to 2.x to avoid torchcodec requirement
     "peft>=0.7.0",
     "accelerate>=0.24.0",
     
     # Audio processing
     "librosa>=0.10.0",
     "soundfile>=0.12.0",
-    
-    # Mozilla Data Collective for Common Voice
-    "datacollective>=0.0.30",
     
     # Evaluation
     "evaluate>=0.4.0",
