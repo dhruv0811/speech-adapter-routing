@@ -196,6 +196,12 @@ def load_ai4bharat(
 ) -> DatasetDict:
     """Load AI4Bharat IndicVoices dataset.
     
+    Dataset: ai4bharat/IndicVoices
+    Available languages: assamese, bengali, bodo, dogri, gujarati, hindi, kannada,
+                        kashmiri, konkani, maithili, malayalam, manipuri, marathi,
+                        nepali, odia, punjabi, sanskrit, santali, sindhi, tamil,
+                        telugu, urdu
+    
     Args:
         language: Language name (e.g., "hindi", "punjabi", "telugu")
         split: Dataset split
@@ -207,52 +213,86 @@ def load_ai4bharat(
     """
     logger.info(f"Loading AI4Bharat IndicVoices for {language}, split={split}")
     
-    # Map language names to dataset config
+    # Map common variations to IndicVoices language names
     lang_map = {
-        "hindi": "hi",
-        "punjabi": "pa", 
-        "telugu": "te",
-        "tamil": "ta",
-        "bengali": "bn",
-        "marathi": "mr",
-        "gujarati": "gu",
-        "kannada": "kn",
-        "malayalam": "ml",
-        "odia": "or",
+        "hi": "hindi",
+        "hindi": "hindi",
+        "pa": "punjabi",
+        "punjabi": "punjabi", 
+        "te": "telugu",
+        "telugu": "telugu",
+        "ta": "tamil",
+        "tamil": "tamil",
+        "bn": "bengali",
+        "bengali": "bengali",
+        "mr": "marathi",
+        "marathi": "marathi",
+        "gu": "gujarati",
+        "gujarati": "gujarati",
+        "kn": "kannada",
+        "kannada": "kannada",
+        "ml": "malayalam",
+        "malayalam": "malayalam",
+        "or": "odia",
+        "odia": "odia",
+        "as": "assamese",
+        "assamese": "assamese",
+        "ur": "urdu",
+        "urdu": "urdu",
+        "ne": "nepali",
+        "nepali": "nepali",
+        "sa": "sanskrit",
+        "sanskrit": "sanskrit",
+        "ks": "kashmiri",
+        "kashmiri": "kashmiri",
+        "sd": "sindhi",
+        "sindhi": "sindhi",
+        "doi": "dogri",
+        "dogri": "dogri",
+        "kok": "konkani",
+        "konkani": "konkani",
+        "mai": "maithili",
+        "maithili": "maithili",
+        "mni": "manipuri",
+        "manipuri": "manipuri",
+        "sat": "santali",
+        "santali": "santali",
+        "brx": "bodo",
+        "bodo": "bodo",
     }
     
-    lang_code = lang_map.get(language.lower(), language)
+    lang_name = lang_map.get(language.lower(), language.lower())
     
     try:
         dataset = hf_load_dataset(
-            "ai4bharat/indicvoices_r1",
-            lang_code,
+            "ai4bharat/IndicVoices",
+            lang_name,
             split=split,
             cache_dir=cache_dir,
             streaming=streaming,
+            trust_remote_code=True,
         )
-    except Exception as e:
-        logger.warning(f"Failed to load ai4bharat/indicvoices_r1: {e}")
-        logger.info("Trying alternative: AI4Bharat/IndicSUPERB")
-        dataset = hf_load_dataset(
-            "AI4Bharat/IndicSUPERB",
-            f"asr_{lang_code}",
-            split=split,
-            cache_dir=cache_dir,
-            streaming=streaming,
-        )
-    
-    # Cast audio to correct sampling rate  
-    dataset = dataset.cast_column("audio", Audio(sampling_rate=16000))
-    
-    # Rename columns to standard names
-    if "transcription" in dataset.column_names:
-        dataset = dataset.rename_column("transcription", "text")
-    elif "sentence" in dataset.column_names:
-        dataset = dataset.rename_column("sentence", "text")
         
-    logger.info(f"Loaded {len(dataset) if not streaming else 'streaming'} samples")
-    return dataset
+        # Cast audio to correct sampling rate  
+        if not streaming:
+            dataset = dataset.cast_column("audio", Audio(sampling_rate=16000))
+        
+        # Rename columns to standard names if needed
+        if "transcription" in dataset.column_names:
+            dataset = dataset.rename_column("transcription", "text")
+        elif "sentence" in dataset.column_names:
+            dataset = dataset.rename_column("sentence", "text")
+            
+        if streaming:
+            logger.info(f"Loaded AI4Bharat IndicVoices ({lang_name}) in streaming mode")
+        else:
+            logger.info(f"Loaded {len(dataset)} samples from AI4Bharat IndicVoices ({lang_name})")
+            
+        return dataset
+        
+    except Exception as e:
+        logger.error(f"Failed to load AI4Bharat IndicVoices for '{lang_name}': {e}")
+        raise
 
 
 def load_mls(

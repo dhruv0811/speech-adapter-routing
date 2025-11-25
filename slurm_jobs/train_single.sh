@@ -46,7 +46,7 @@ export WANDB_DIR=$PROJECT/speech-adapter-routing/logs
 export UV_CACHE_DIR=$PROJECT/.cache/uv
 
 # Create output directory
-OUTPUT_DIR="checkpoints/${MODEL}_${LANGUAGE}_r${RANK}"
+OUTPUT_DIR="checkpoints/${MODEL}_${LANGUAGE}_r${RANK}_cv_ai4bh"
 mkdir -p $OUTPUT_DIR
 mkdir -p logs
 
@@ -57,13 +57,13 @@ uv run python scripts/train_lora.py \
     --lora_rank $RANK \
     --lora_alpha $((RANK * 2)) \
     --lora_dropout 0.1 \
-    --data_sources common_voice \
+    --data_sources common_voice ai4bharat \
     --batch_size 16 \
     --gradient_accumulation_steps 4 \
     --learning_rate 5e-4 \
     --warmup_steps 500 \
-    --max_steps 5000 \
-    --eval_steps 1000 \
+    --max_steps 3500 \
+    --eval_steps 500 \
     --save_steps 1000 \
     --mixed_precision bf16 \
     --output_dir $OUTPUT_DIR \
