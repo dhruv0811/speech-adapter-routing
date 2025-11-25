@@ -80,7 +80,7 @@ def parse_args():
     parser.add_argument("--weight_decay", type=float, default=0.01, help="Weight decay")
     parser.add_argument("--warmup_steps", type=int, default=500, help="Warmup steps")
     parser.add_argument("--max_steps", type=int, default=5000, help="Maximum training steps")
-    parser.add_argument("--eval_steps", type=int, default=500, help="Evaluation interval")
+    parser.add_argument("--eval_steps", type=int, default=1000, help="Evaluation interval")
     parser.add_argument("--scheduler_type", type=str, default="linear", help="LR scheduler type")
     parser.add_argument(
         "--mixed_precision",

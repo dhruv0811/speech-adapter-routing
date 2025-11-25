@@ -16,7 +16,7 @@ scheduler_type: "linear"          # linear, cosine, constant
 warmup_ratio: null                # Alternative to warmup_steps
 
 # Evaluation & checkpointing
-eval_steps: 500                   # Evaluate every N steps
+eval_steps: 1000                   # Evaluate every N steps
 save_steps: 1000                  # Save checkpoint every N steps
 save_total_limit: 3               # Keep only last N checkpoints
 load_best_model_at_end: true

@@ -964,7 +964,7 @@ training:
   weight_decay: 0.01
   warmup_steps: 500
   max_steps: 5000
-  eval_steps: 500
+  eval_steps: 1000
   save_steps: 1000
   mixed_precision: "bf16"
   gradient_checkpointing: true

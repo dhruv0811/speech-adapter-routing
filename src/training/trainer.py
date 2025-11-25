@@ -35,7 +35,7 @@ class ASRTrainer:
         weight_decay: float = 0.01,
         warmup_steps: int = 500,
         max_steps: int = 5000,
-        eval_steps: int = 500,
+        eval_steps: int = 1000,
         gradient_accumulation_steps: int = 1,
         max_grad_norm: float = 1.0,
         scheduler_type: str = "linear",
@@ -214,6 +214,13 @@ class ASRTrainer:
         
         self.model.train()
         self.model.to(self.device)
+        
+        # Run initial evaluation before training starts
+        if self.eval_dataloader is not None:
+            logger.info("Running initial evaluation (step 0)...")
+            initial_metrics = self.evaluate()
+            logger.info(f"Initial metrics: WER={initial_metrics['wer']:.4f}, CER={initial_metrics['cer']:.4f}")
+            self.model.train()
         
         train_loss = 0.0
         num_batches = 0

@@ -63,7 +63,7 @@ uv run python scripts/train_lora.py \
     --learning_rate 5e-4 \
     --warmup_steps 500 \
     --max_steps 5000 \
-    --eval_steps 500 \
+    --eval_steps 1000 \
     --save_steps 1000 \
     --mixed_precision bf16 \
     --output_dir $OUTPUT_DIR \
