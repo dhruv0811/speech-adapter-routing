@@ -4,7 +4,7 @@
 from src.data.dataset import load_common_voice
 
 def main():
-    print("Testing Common Voice 17.0 from HuggingFace (fixie-ai/common_voice_17_0)...")
+    print("Testing Common Voice 17.0 from HuggingFace (fsicoli/common_voice_17_0)...")
     print()
     
     # Test streaming mode first (faster, no full download)

@@ -236,7 +236,8 @@ class ASRTrainer:
                 
                 # Forward pass
                 loss = self._training_step(batch)
-                train_loss += loss
+                loss_value = loss.item()
+                train_loss += loss_value
                 num_batches += 1
                 
                 # Backward pass
@@ -271,13 +272,13 @@ class ASRTrainer:
                     self.global_step += 1
                     pbar.update(1)
                     pbar.set_postfix({
-                        "loss": f"{loss:.4f}",
+                        "loss": f"{loss_value:.4f}",
                         "lr": f"{self.get_lr():.2e}",
                     })
                     
                     # Trigger step callbacks
                     for callback in self.callbacks:
-                        callback.on_step_end(self, self.global_step, loss)
+                        callback.on_step_end(self, self.global_step, loss_value)
                     
                     # Evaluate
                     if self.eval_dataloader is not None and self.global_step % self.eval_steps == 0:
@@ -303,14 +304,14 @@ class ASRTrainer:
         pbar.close()
         return self._finalize_training(train_loss, num_batches)
     
-    def _training_step(self, batch: Dict[str, torch.Tensor]) -> float:
+    def _training_step(self, batch: Dict[str, torch.Tensor]) -> torch.Tensor:
         """Perform single training step.
         
         Args:
             batch: Batch of data
             
         Returns:
-            Loss value
+            Loss tensor (for backward pass)
         """
         # Move batch to device
         input_features = batch["input_features"].to(self.device)
@@ -328,7 +329,7 @@ class ASRTrainer:
             )
             loss = outputs.loss
         
-        return loss.item()
+        return loss
     
     def evaluate(self) -> Dict[str, float]:
         """Run evaluation.

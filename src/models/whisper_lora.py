@@ -9,7 +9,6 @@ import torch.nn as nn
 from transformers import WhisperForConditionalGeneration, WhisperProcessor
 from peft import (
     LoraConfig,
-    TaskType,
     get_peft_model,
     PeftModel,
     prepare_model_for_kbit_training,
@@ -84,13 +83,15 @@ class WhisperLoRA(nn.Module):
             self.model.config.use_cache = False
         
         # Configure LoRA
+        # Note: Don't use TaskType.SEQ_2_SEQ_LM as it causes PEFT to inject input_ids handling
+        # which conflicts with Whisper's input_features interface
         self.lora_config = LoraConfig(
             r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
             target_modules=target_modules,
             bias="none",
-            task_type=TaskType.SEQ_2_SEQ_LM,
+            # Removed task_type to avoid PEFT's seq2seq wrapper adding input_ids
         )
         
         # Apply LoRA
@@ -114,6 +115,9 @@ class WhisperLoRA(nn.Module):
         self,
         input_features: torch.Tensor,
         labels: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        decoder_input_ids: Optional[torch.Tensor] = None,
+        decoder_attention_mask: Optional[torch.Tensor] = None,
         **kwargs,
     ) -> Dict[str, torch.Tensor]:
         """Forward pass.
@@ -121,15 +125,21 @@ class WhisperLoRA(nn.Module):
         Args:
             input_features: Log-mel spectrogram (batch, n_mels, time)
             labels: Target token IDs (batch, seq_len)
-            **kwargs: Additional arguments for model
+            attention_mask: Attention mask for encoder
+            decoder_input_ids: Decoder input IDs (optional, auto-generated from labels)
+            decoder_attention_mask: Decoder attention mask
+            **kwargs: Additional arguments (ignored to avoid conflicts)
             
         Returns:
             Model outputs including loss if labels provided
         """
+        # Only pass supported arguments to avoid PEFT/Whisper conflicts
         return self.model(
             input_features=input_features,
             labels=labels,
-            **kwargs,
+            attention_mask=attention_mask,
+            decoder_input_ids=decoder_input_ids,
+            decoder_attention_mask=decoder_attention_mask,
         )
     
     def generate(
