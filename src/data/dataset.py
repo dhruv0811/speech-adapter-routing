@@ -84,8 +84,8 @@ class ASRDataset(Dataset):
                 if text is None:
                     return True
                 text = str(text).strip()
-                # Tokenize and check length
-                tokens = self.processor.tokenizer(text, add_special_tokens=False).input_ids
+                # Tokenize WITH special tokens to match actual training tokenization
+                tokens = self.processor.tokenizer(text, add_special_tokens=True).input_ids
                 return len(tokens) <= self.max_label_length
             except Exception:
                 return True

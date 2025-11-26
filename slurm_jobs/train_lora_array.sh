@@ -95,7 +95,7 @@ uv run python scripts/train_lora.py \
     --mixed_precision bf16 \
     --output_dir $OUTPUT_DIR \
     --wandb_project whisper-lora-adapters \
-    --wandb_run_name ${MODEL}_${LANGUAGE}_r${RANK} \
+    --wandb_run_name ARRAY_${MODEL}_${LANGUAGE}_r${RANK} \
     --seed 42
 
 echo "Training completed for ${MODEL} ${LANGUAGE} r${RANK}"
