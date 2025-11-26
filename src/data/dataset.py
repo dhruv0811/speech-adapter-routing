@@ -358,12 +358,19 @@ def load_mls(
     Returns:
         HuggingFace dataset
     """
-    logger.info(f"Loading MLS for {language}, split={split}")
+    # MLS uses 'dev' instead of 'validation'
+    split_map = {
+        "validation": "dev",
+        "val": "dev",
+    }
+    actual_split = split_map.get(split, split)
+    
+    logger.info(f"Loading MLS for {language}, split={actual_split}")
     
     dataset = hf_load_dataset(
         "facebook/multilingual_librispeech",
         language.lower(),
-        split=split,
+        split=actual_split,
         cache_dir=cache_dir,
         streaming=streaming,
     )
