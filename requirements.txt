@@ -37,7 +37,3 @@ pyyaml>=6.0
 
 # Utilities
 python-dotenv>=1.0.0
-
-# ESPnet for OWSM (optional)
-espnet>=202310
-espnet_model_zoo>=0.1.7
