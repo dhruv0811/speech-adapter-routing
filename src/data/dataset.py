@@ -25,6 +25,7 @@ class ASRDataset(Dataset):
         language: str = "en",
         max_duration: float = 30.0,
         min_duration: float = 1.0,
+        max_label_length: int = 448,  # Whisper's max token length
         sampling_rate: int = 16000,
     ):
         """
@@ -36,6 +37,7 @@ class ASRDataset(Dataset):
             language: Language code for tokenizer
             max_duration: Maximum audio duration in seconds
             min_duration: Minimum audio duration in seconds
+            max_label_length: Maximum label length in tokens (Whisper max is 448)
             sampling_rate: Target sampling rate
         """
         self.dataset = hf_dataset
@@ -45,10 +47,14 @@ class ASRDataset(Dataset):
         self.language = language
         self.max_duration = max_duration
         self.min_duration = min_duration
+        self.max_label_length = max_label_length
         self.sampling_rate = sampling_rate
         
         # Filter by duration if audio info available
         self._filter_by_duration()
+        
+        # Filter by label length to avoid exceeding Whisper's max
+        self._filter_by_label_length()
         
     def _filter_by_duration(self):
         """Filter samples by audio duration."""
@@ -68,6 +74,28 @@ class ASRDataset(Dataset):
         
         if filtered_size < original_size:
             logger.info(f"Filtered {original_size - filtered_size} samples by duration. "
+                       f"Remaining: {filtered_size}")
+    
+    def _filter_by_label_length(self):
+        """Filter samples where transcription exceeds max token length."""
+        def is_valid_label_length(example):
+            try:
+                text = example[self.text_column]
+                if text is None:
+                    return True
+                text = str(text).strip()
+                # Tokenize and check length
+                tokens = self.processor.tokenizer(text, add_special_tokens=False).input_ids
+                return len(tokens) <= self.max_label_length
+            except Exception:
+                return True
+        
+        original_size = len(self.dataset)
+        self.dataset = self.dataset.filter(is_valid_label_length)
+        filtered_size = len(self.dataset)
+        
+        if filtered_size < original_size:
+            logger.info(f"Filtered {original_size - filtered_size} samples by label length (>{self.max_label_length} tokens). "
                        f"Remaining: {filtered_size}")
     
     def __len__(self) -> int:
