@@ -149,7 +149,7 @@ def load_common_voice(
     """Load Common Voice 17.0 dataset from HuggingFace.
     
     Uses fsicoli/common_voice_17_0 which has all languages including Punjabi.
-    Requires trust_remote_code=True for the loading script.
+    Requires datasets<3.0 for trust_remote_code support.
     
     Args:
         language: Language code (e.g., "hi", "it", "pa-IN", "te")

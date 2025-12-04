@@ -340,10 +340,10 @@ class LIDTrainer:
         self.feature_extractor.eval()  # Always in eval mode (frozen)
         
         # Run initial evaluation
-        if self.eval_dataloader is not None:
-            logger.info("Running initial evaluation...")
-            initial_metrics = self.evaluate()
-            logger.info(f"Initial accuracy: {initial_metrics['accuracy']:.4f}")
+        # if self.eval_dataloader is not None:
+        #     logger.info("Running initial evaluation...")
+        #     initial_metrics = self.evaluate()
+        #     logger.info(f"Initial accuracy: {initial_metrics['accuracy']:.4f}")
         
         train_loss = 0.0
         num_batches = 0
@@ -613,7 +613,30 @@ def parse_args():
         default=5000,
         help="Maximum samples per language",
     )
-    parser.add_argument("--balanced", action="store_true", default=True, help="Balance classes")
+    parser.add_argument("--balanced", action="store_true", default=True, help="Balance classes by undersampling (not recommended with class_weights)")
+    parser.add_argument("--no_balanced", action="store_true", help="Disable class balancing (use with --class_weights)")
+    parser.add_argument(
+        "--class_weights",
+        type=str,
+        default="none",
+        choices=["none", "inverse_freq", "inverse_sqrt", "effective_samples"],
+        help="Class weighting strategy for imbalanced data: "
+             "none=no weighting, inverse_freq=1/frequency, "
+             "inverse_sqrt=sqrt(max/count), effective_samples=CVPR2019 method",
+    )
+    parser.add_argument(
+        "--class_weight_max",
+        type=float,
+        default=10.0,
+        help="Maximum class weight to prevent extreme upweighting (default: 10.0)",
+    )
+    parser.add_argument(
+        "--class_weight_smoothing",
+        type=float,
+        default=0.0,
+        help="Smoothing factor to blend weights towards uniform. "
+             "0=full weighting, 1=uniform. Recommended 0.3-0.5 for extreme imbalance.",
+    )
     parser.add_argument("--max_duration", type=float, default=15.0, help="Max audio duration")
     parser.add_argument("--min_duration", type=float, default=1.0, help="Min audio duration")
     
@@ -757,13 +780,44 @@ def main():
     if not train_datasets:
         raise ValueError("No datasets could be loaded!")
     
+    # Count samples per language for class weighting
+    train_class_counts = {lang: len(ds) for lang, ds in train_datasets.items()}
+    logger.info(f"Training class counts: {train_class_counts}")
+    
+    # Determine if we should balance by undersampling
+    use_balanced = args.balanced and not args.no_balanced and args.class_weights == "none"
+    if args.class_weights != "none" and args.balanced and not args.no_balanced:
+        logger.warning("Using --class_weights with --balanced is not recommended. "
+                      "Consider using --no_balanced to keep all samples.")
+    
     # Create LID datasets
     train_lid_dataset = LIDDataset(
         datasets_by_language=train_datasets,
         languages=args.languages,
         samples_per_language=args.samples_per_language,
-        balanced=args.balanced,
+        balanced=use_balanced,
     )
+    
+    # Compute and apply class weights if requested
+    if args.class_weights != "none":
+        # Get actual counts after dataset creation (may differ due to sampling)
+        actual_counts = {}
+        for sample in train_lid_dataset.samples:
+            lang = sample["language"]
+            actual_counts[lang] = actual_counts.get(lang, 0) + 1
+        
+        logger.info(f"Actual training class counts: {actual_counts}")
+        
+        class_weights = LanguageClassifier.compute_class_weights_from_counts(
+            class_counts=actual_counts,
+            languages=args.languages,
+            strategy=args.class_weights,
+            max_weight=args.class_weight_max,
+            smoothing=args.class_weight_smoothing,
+        )
+        
+        classifier.set_class_weights(class_weights.to(device))
+        logger.info(f"Applied {args.class_weights} class weights (max={args.class_weight_max}, smoothing={args.class_weight_smoothing}): {dict(zip(args.languages, class_weights.tolist()))}")
     
     eval_lid_dataset = LIDDataset(
         datasets_by_language=eval_datasets,

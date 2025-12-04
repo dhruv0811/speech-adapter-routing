@@ -34,6 +34,7 @@ class LanguageClassifier(nn.Module):
         cnn_kernel_size: int = 5,
         label_smoothing: float = 0.0,
         languages: Optional[List[str]] = None,
+        class_weights: Optional[List[float]] = None,
     ):
         """
         Args:
@@ -48,6 +49,7 @@ class LanguageClassifier(nn.Module):
             cnn_kernel_size: CNN kernel size
             label_smoothing: Label smoothing for cross-entropy loss
             languages: Ordered list of language names for index mapping
+            class_weights: Optional class weights for imbalanced data (list of floats, one per class)
         """
         super().__init__()
         
@@ -102,9 +104,109 @@ class LanguageClassifier(nn.Module):
                 nn.Linear(128, 1),
             )
         
-        # Loss function
-        self.loss_fn = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
+        # Class weights for imbalanced data
+        self._class_weights = None
+        if class_weights is not None:
+            self.set_class_weights(torch.tensor(class_weights, dtype=torch.float32))
         
+        # Loss function (will be updated if class_weights are set)
+        self._init_loss_fn()
+        
+    def _init_loss_fn(self):
+        """Initialize or reinitialize the loss function with current settings."""
+        self.loss_fn = nn.CrossEntropyLoss(
+            weight=self._class_weights,
+            label_smoothing=self.label_smoothing,
+        )
+    
+    def set_class_weights(self, weights: torch.Tensor):
+        """Set class weights for handling imbalanced data.
+        
+        Args:
+            weights: Tensor of shape (num_classes,) with weight for each class.
+                    Higher weights = more importance for that class.
+        """
+        if weights.shape[0] != self.num_classes:
+            raise ValueError(f"Expected {self.num_classes} weights, got {weights.shape[0]}")
+        
+        # Remove existing attribute if it exists (needed for register_buffer)
+        if hasattr(self, "_class_weights"):
+            delattr(self, "_class_weights")
+        
+        # Register as buffer so it moves with the model to different devices
+        self.register_buffer("_class_weights", weights)
+        self._init_loss_fn()
+        
+        logger.info(f"Class weights set: {dict(zip(self.languages, weights.tolist()))}")
+    
+    def get_class_weights(self) -> Optional[torch.Tensor]:
+        """Get current class weights."""
+        return self._class_weights
+    
+    @staticmethod
+    def compute_class_weights_from_counts(
+        class_counts: Dict[str, int],
+        languages: List[str],
+        strategy: str = "inverse_freq",
+        max_weight: Optional[float] = None,
+        smoothing: float = 0.0,
+    ) -> torch.Tensor:
+        """Compute class weights from sample counts.
+        
+        Args:
+            class_counts: Dict mapping language name to sample count
+            languages: Ordered list of language names (defines weight order)
+            strategy: Weighting strategy:
+                - "inverse_freq": weight = total / (n_classes * count)
+                - "inverse_sqrt": weight = sqrt(max_count / count)
+                - "effective_samples": weight based on effective number of samples
+            max_weight: Maximum allowed weight (clips extreme values). 
+                       Recommended: 5-10 for extreme imbalance.
+            smoothing: Blend with uniform weights. 0=full weighting, 1=uniform.
+                      Recommended: 0.3-0.5 for extreme imbalance.
+                
+        Returns:
+            Tensor of class weights
+        """
+        counts = torch.tensor([class_counts.get(lang, 1) for lang in languages], dtype=torch.float32)
+        total = counts.sum()
+        n_classes = len(languages)
+        
+        if strategy == "inverse_freq":
+            # Standard inverse frequency weighting
+            weights = total / (n_classes * counts)
+        elif strategy == "inverse_sqrt":
+            # Softer weighting using sqrt
+            max_count = counts.max()
+            weights = torch.sqrt(max_count / counts)
+        elif strategy == "effective_samples":
+            # Class-balanced loss based on effective number of samples
+            # From "Class-Balanced Loss Based on Effective Number of Samples" (CVPR 2019)
+            beta = 0.9999
+            effective_num = 1.0 - torch.pow(beta, counts)
+            weights = (1.0 - beta) / effective_num
+            weights = weights / weights.sum() * n_classes  # Normalize
+        else:
+            raise ValueError(f"Unknown strategy: {strategy}")
+        
+        # Normalize weights to have mean of 1
+        weights = weights / weights.mean()
+        
+        # Cap extreme weights if specified
+        if max_weight is not None:
+            weights = torch.clamp(weights, max=max_weight)
+            weights = weights / weights.mean()  # Re-normalize after clamping
+            logger.info(f"Capped weights to max={max_weight}")
+        
+        # Smooth towards uniform distribution if specified
+        if smoothing > 0:
+            uniform = torch.ones_like(weights)
+            weights = (1 - smoothing) * weights + smoothing * uniform
+            weights = weights / weights.mean()  # Re-normalize
+            logger.info(f"Applied smoothing={smoothing}")
+        
+        return weights
+    
     def _pool_features(
         self,
         features: torch.Tensor,
@@ -245,6 +347,7 @@ class LanguageClassifier(nn.Module):
                 "use_cnn": self.use_cnn,
                 "label_smoothing": self.label_smoothing,
                 "languages": self.languages,
+                "class_weights": self._class_weights.tolist() if self._class_weights is not None else None,
             }
         }
         torch.save(checkpoint, save_path)
@@ -274,10 +377,14 @@ class LanguageClassifier(nn.Module):
             use_cnn=config.get("use_cnn", False),
             label_smoothing=config.get("label_smoothing", 0.0),
             languages=config.get("languages"),
+            class_weights=config.get("class_weights"),
         )
         
         classifier.load_state_dict(checkpoint["state_dict"])
         logger.info(f"Loaded classifier from {load_path}")
+        
+        if config.get("class_weights"):
+            logger.info(f"Loaded class weights: {dict(zip(classifier.languages, config['class_weights']))}")
         
         return classifier
 

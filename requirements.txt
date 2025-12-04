@@ -2,7 +2,7 @@
 torch>=2.1.0
 torchaudio>=2.1.0
 transformers>=4.35.0
-datasets>=2.14.0
+datasets>=2.14.0,<3.0  # Pin to <3.0 for trust_remote_code support (required for fsicoli/common_voice)
 peft>=0.7.0
 accelerate>=0.24.0
 
